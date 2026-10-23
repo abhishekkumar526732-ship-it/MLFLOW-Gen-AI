@@ -4,6 +4,15 @@ A fast Q&A web application built with **Streamlit** and powered by **Groq** usin
 
 ---
 
+## 🎯 Problem This Project Solves
+
+1. **Slow LLM Latencies & High Costs**: Traditional cloud LLM APIs can be sluggish and expensive for real-time applications. By pairing Groq's LPU acceleration with the open-weight **GPT-OSS 120B** model, this project achieves sub-second, streaming responses at high token throughput.
+2. **Lack of GenAI Tracking & Observability**: Most chat apps lack visibility into performance over time. This project integrates **MLflow with DagsHub Cloud** to track prompts, parameters, query latency, and output text automatically.
+3. **Reproducible Model Evaluation**: Comparing model answers against ground truth is often unstandardized. This system includes automated benchmark evaluation tools that measure latency, length, and accuracy, exporting clean results into `eval.csv`.
+4. **No Vendor Lock-In**: Seamlessly switch between different open models (`openai/gpt-oss-120b`, `llama-3.3-70b-versatile`, `llama-3.1-8b`, `mixtral-8x7b`) without rewriting your pipeline.
+
+---
+
 ## ⚡ Features
 
 - **Ultra-Fast Inference**: Streaming responses via Groq LPU.

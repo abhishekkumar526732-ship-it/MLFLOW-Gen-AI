@@ -54,10 +54,45 @@ st.markdown(
         border: 1px solid #1e293b;
         margin-top: 0.35rem;
     }
+    .dagshub-badge {
+        display: inline-block;
+        background-color: #132f22;
+        color: #34d399;
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        border: 1px solid #059669;
+        margin-bottom: 0.5rem;
+    }
     </style>
     """,
     unsafe_allow_html=True,
 )
+
+# Helper: Initialize DagsHub MLflow remote tracking
+@st.cache_resource
+def setup_dagshub_tracking():
+    repo_owner = os.getenv("DAGSHUB_REPO_OWNER", "abhishekkumar526732-ship-it")
+    repo_name = os.getenv("DAGSHUB_REPO_NAME", "MLFLOW-Gen-AI")
+    token = os.getenv("DAGSHUB_USER_TOKEN")
+    tracking_uri = os.getenv("MLFLOW_TRACKING_URI", f"https://dagshub.com/{repo_owner}/{repo_name}.mlflow")
+
+    if token:
+        try:
+            import dagshub
+            import dagshub.auth
+            import mlflow
+            dagshub.auth.add_app_token(token)
+            os.environ["MLFLOW_TRACKING_USERNAME"] = repo_owner
+            os.environ["MLFLOW_TRACKING_PASSWORD"] = token
+            dagshub.init(repo_owner=repo_owner, repo_name=repo_name, mlflow=True)
+            mlflow.set_tracking_uri(tracking_uri)
+            return True, tracking_uri
+        except Exception as err:
+            return False, str(err)
+    return False, "DAGSHUB_USER_TOKEN not provided in .env"
+
+dagshub_ready, dagshub_info = setup_dagshub_tracking()
 
 # Sidebar Configuration
 with st.sidebar:
@@ -106,10 +141,18 @@ with st.sidebar:
     )
 
     st.markdown("---")
-    # MLflow Tracking Toggle
-    enable_mlflow = st.checkbox("Track queries in MLflow", value=False)
+    # DagsHub & MLflow Tracking
+    st.subheader("☁️ DagsHub MLflow")
+    if dagshub_ready:
+        st.markdown(f'<div class="dagshub-badge">🌐 DagsHub Connected</div>', unsafe_allow_html=True)
+        st.caption(f"[View DagsHub Experiments]({dagshub_info})")
+    else:
+        st.warning(f"DagsHub Status: {dagshub_info}")
+
+    enable_mlflow = st.checkbox("Track queries to DagsHub MLflow", value=dagshub_ready)
     
     # Chat Controls
+    st.markdown("---")
     st.subheader("Data & Session")
     if st.button("🗑️ Clear Chat History", use_container_width=True):
         st.session_state.messages = []
@@ -224,12 +267,12 @@ with tab_chat:
                         },
                     })
 
-                    # Optional MLflow tracking
-                    if enable_mlflow:
+                    # Optional DagsHub MLflow tracking
+                    if enable_mlflow and dagshub_ready:
                         try:
                             import mlflow
                             mlflow.set_experiment("Groq_QA_App")
-                            with mlflow.start_run(nested=True):
+                            with mlflow.start_run(run_name=f"chat_{int(time.time())}"):
                                 mlflow.log_param("model", model_name)
                                 mlflow.log_param("temperature", temperature)
                                 mlflow.log_param("max_tokens", max_tokens)
@@ -248,7 +291,9 @@ with tab_eval:
     
     col_a, col_b = st.columns([2, 1])
     with col_a:
-        st.write("Generate benchmark metrics using Groq's `openai/gpt-oss-120b` and save results to `eval.csv`.")
+        st.write("Generate benchmark metrics using Groq's `openai/gpt-oss-120b`, save to `eval.csv`, and track in DagsHub MLflow.")
+        if dagshub_ready:
+            st.markdown(f"☁️ **Remote Tracking**: [{dagshub_info}]({dagshub_info})")
     with col_b:
         run_bench = st.button("🚀 Run Evaluation Benchmark Now", use_container_width=True)
 
@@ -293,8 +338,31 @@ with tab_eval:
                             "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                         })
                     new_df = pd.DataFrame(rows)
-                    new_df.to_csv("eval.csv", index=False)
-                    st.success("Benchmark completed! Results updated in eval.csv.")
+                    
+                    # Safe save handling
+                    try:
+                        new_df.to_csv("eval.csv", index=False)
+                    except PermissionError:
+                        fallback_file = f"eval_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+                        new_df.to_csv(fallback_file, index=False)
+                        st.warning(f"eval.csv is open in another program. Saved to {fallback_file}")
+
+                    # Log to DagsHub MLflow
+                    if dagshub_ready:
+                        try:
+                            import mlflow
+                            mlflow.set_experiment("Groq_LLM_Evaluation")
+                            with mlflow.start_run(run_name=f"benchmark_{model_name.replace('/', '_')}"):
+                                mlflow.log_param("model", model_name)
+                                mlflow.log_param("temperature", temperature)
+                                mlflow.log_metric("avg_latency_sec", float(new_df["latency_sec"].mean()))
+                                mlflow.log_artifact("eval.csv")
+                            st.success(f"Benchmark completed & logged to DagsHub! [View in DagsHub MLflow]({dagshub_info})")
+                        except Exception as m_err:
+                            st.info(f"Local benchmark saved; MLflow sync note: {m_err}")
+                    else:
+                        st.success("Benchmark completed! Results updated in eval.csv.")
+
                 except Exception as err:
                     st.error(f"Benchmark failed: {err}")
 

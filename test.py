@@ -16,8 +16,8 @@ load_dotenv()
 
 groq_api_key = os.getenv("GROQ_API_KEY")
 groq_model = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
-repo_owner = os.getenv("DAGSHUB_REPO_OWNER", "krishnaik06")
-repo_name = os.getenv("DAGSHUB_REPO_NAME", "MLfLow")
+repo_owner = os.getenv("DAGSHUB_REPO_OWNER", "abhishekkumar526732-ship-it")
+repo_name = os.getenv("DAGSHUB_REPO_NAME", "MLFLOW-Gen-AI")
 
 # Optional MLflow / DagsHub imports
 mlflow_available = False
@@ -57,12 +57,18 @@ system_prompt = "Answer the following question accurately in two concise sentenc
 if mlflow_available:
     try:
         dagshub_token = os.getenv("DAGSHUB_USER_TOKEN")
-        if dagshub_token and repo_owner != "krishnaik06":
+        tracking_uri = os.getenv("MLFLOW_TRACKING_URI", f"https://dagshub.com/{repo_owner}/{repo_name}.mlflow")
+        if dagshub_token:
+            import dagshub.auth
+            dagshub.auth.add_app_token(dagshub_token)
+            os.environ["MLFLOW_TRACKING_USERNAME"] = repo_owner
+            os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
             dagshub.init(repo_owner=repo_owner, repo_name=repo_name, mlflow=True)
-            mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI", f"https://dagshub.com/{repo_owner}/{repo_name}.mlflow"))
+            mlflow.set_tracking_uri(tracking_uri)
+            print(f"Connected to DagsHub remote MLflow -> {tracking_uri}")
         mlflow.set_experiment("Groq_LLM_Evaluation")
     except Exception as e:
-        print(f"Note: MLflow/DagsHub remote tracking skipped ({e})")
+        print(f"Note: MLflow/DagsHub remote tracking setup error: {e}")
 
 # Determine whether real Groq API key is present
 is_valid_key = bool(groq_api_key and not groq_api_key.startswith("your_"))

@@ -23,6 +23,14 @@ A fast Q&A web application built with **Streamlit** and powered by **Groq** usin
 
 ---
 
+## 📸 DagsHub MLflow Dashboard & Artifacts
+
+![DagsHub MLflow Experiment Tracking](image.png)
+
+*Tracking runs, parameters, metrics, and conversation artifacts (`question.txt`, `response.txt`) on DagsHub Cloud.*
+
+---
+
 ## 🚀 Quick Start
 
 ### 1. Install Dependencies
@@ -63,6 +71,7 @@ python test.py
 ├── app.py            # Streamlit Q&A application & evaluation UI
 ├── test.py           # CLI benchmark evaluation & DagsHub logging script
 ├── eval.csv          # Evaluation results and performance metrics
+├── image.png         # DagsHub MLflow dashboard screenshot
 ├── requirements.txt  # Project Python dependencies
 ├── .env.example      # Environment variables template
 └── README.md         # Documentation

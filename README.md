@@ -1,20 +1,20 @@
-# MLFLOW-Gen-AI: Groq Q&A Assistant (GPT-OSS 120B)
+# MLFLOW Gen-AI Assistant
 
-A fast, interactive Q&A assistant built with **Streamlit** and powered by **Groq** using the flagship **`openai/gpt-oss-120b`** model (with support for other Groq models like LLaMA 3.3 70B). Includes optional MLflow experiment tracking.
+A fast Q&A web application built with **Streamlit** and powered by **Groq** using the **`openai/gpt-oss-120b`** model, integrated with **DagsHub MLflow** for experiment tracking and evaluation reporting.
 
 ---
 
 ## ⚡ Features
 
-- **Groq LPU Acceleration**: High-speed, streaming token generation.
-- **Flagship 120B Model**: Default support for `openai/gpt-oss-120b` (plus `openai/gpt-oss-20b`, `llama-3.3-70b-versatile`, `llama-3.1-8b-instant`, `mixtral-8x7b-32768`, or custom model IDs).
-- **Streamlit Chat UI**: Native streaming chat interface with response latency metrics.
-- **Sidebar Controls**: Real-time temperature, max token, and system prompt tuning.
-- **MLflow Tracking**: Optional toggle to log runs, questions, responses, and metrics directly to MLflow.
+- **Ultra-Fast Inference**: Streaming responses via Groq LPU.
+- **Flagship 120B Model**: Powered by `openai/gpt-oss-120b` with multi-model support.
+- **Interactive UI**: Clean Streamlit chat interface with latency metrics.
+- **Evaluation & Reporting**: Benchmark runner with automated exports to `eval.csv`.
+- **DagsHub MLflow Tracking**: Remote cloud experiment tracking and artifact logging.
 
 ---
 
-## 🚀 Quickstart
+## 🚀 Quick Start
 
 ### 1. Install Dependencies
 ```bash
@@ -22,26 +22,39 @@ python -m pip install -r requirements.txt
 ```
 
 ### 2. Configure Environment (`.env`)
-Create or edit your `.env` file with your Groq API key:
+Create a `.env` file from `.env.example`:
 ```dotenv
-GROQ_API_KEY=gsk_your_groq_api_key_here
+GROQ_API_KEY=your_groq_api_key
 GROQ_MODEL=openai/gpt-oss-120b
-```
-*(You can get a free Groq API key at [console.groq.com/keys](https://console.groq.com/keys))*
 
-### 3. Launch the Streamlit App
+DAGSHUB_REPO_OWNER=abhishekkumar526732-ship-it
+DAGSHUB_REPO_NAME=MLFLOW-Gen-AI
+DAGSHUB_USER_TOKEN=your_dagshub_token
+```
+
+### 3. Run the Streamlit App
 ```bash
 python -m streamlit run app.py
 ```
-Or if `streamlit` is in your system PATH:
+Open **http://localhost:8501** in your browser.
+
+---
+
+## 🧪 Run Benchmark & Evaluation
+Generate the `eval.csv` report and log metrics directly to DagsHub MLflow:
 ```bash
-streamlit run app.py
+python test.py
 ```
 
 ---
 
-## 🧪 Testing with MLflow
-To run the automated evaluation script:
-```bash
-python test.py
+## 📁 Project Structure
+
+```text
+├── app.py            # Streamlit Q&A application & evaluation UI
+├── test.py           # CLI benchmark evaluation & DagsHub logging script
+├── eval.csv          # Evaluation results and performance metrics
+├── requirements.txt  # Project Python dependencies
+├── .env.example      # Environment variables template
+└── README.md         # Documentation
 ```
